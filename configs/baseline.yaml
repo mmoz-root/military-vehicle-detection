@@ -1,0 +1,32 @@
+# configs/baseline.yaml
+# -------------------------------------------------------------------
+# BASELINE run: replicates the original notebook's hyperparameters so
+# that retraining on the CLEANED dataset isolates a single variable —
+# the data. Any change in mAP vs the old ~0.58 is attributable to the
+# taxonomy cleanup, not to different settings.
+#
+# Later configs (e.g. yolov8s.yaml) will change ONE thing at a time so
+# every improvement is measurable against this baseline.
+# -------------------------------------------------------------------
+
+# --- Model & data ---
+model: yolov8n.pt                       # pretrained weights to fine-tune from
+data: data/dataset_clean/data.yaml      # resolved relative to project root
+
+# --- Run identity (output lands in runs/<name>/) ---
+name: baseline_yolov8n
+project: runs
+
+# --- Core training ---
+epochs: 50
+patience: 20            # early-stop if no val improvement for 20 epochs
+imgsz: 640
+batch: 16               # set to -1 to let Ultralytics auto-pick for your GPU
+seed: 42                # reproducibility
+# device: 0             # uncomment & set on GPU (0 = first CUDA), 'mps' on Mac,
+                        # or leave commented for auto-detection
+
+# --- Augmentation / regularization (matched to the original run) ---
+close_mosaic: 10        # turn off mosaic aug for the last 10 epochs
+mixup: 0.15
+dropout: 0.1
