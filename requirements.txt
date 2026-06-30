@@ -1,0 +1,6 @@
+opencv-python==4.13.0.92
+pandas==2.3.3
+python-dotenv==1.2.1
+PyYAML==6.0.3
+roboflow==1.2.16
+ultralytics==8.4.83
