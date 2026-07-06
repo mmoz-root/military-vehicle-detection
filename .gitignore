@@ -6,4 +6,4 @@ dataset_clean/
 runs/
 audit_out/
 __pycache__/
-.DS_Store
+\.DS_Store
