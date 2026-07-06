@@ -110,3 +110,19 @@ capacity, which is what the dataset cleanup above addresses.
   held-out data.
 - **Video-frame artifacts:** some images are frames captured from surveillance/
   drone footage and contain player overlays or timestamps baked into the pixels.
+
+## Results
+
+Best model: yolov8n @ 640, re-split data. Reported at two scopes:
+
+| Scope | mAP50 |
+|---|---|
+| All 10 classes | 0.649 |
+| Core 8 classes (excl. trench, vehicle) | 0.726 |
+
+Two classes are excluded from the "core" scope, with justification:
+
+- **trench** — only 51 instances total; insufficient to learn or evaluate reliably.
+- **vehicle** — a generic catch-all that overlaps the specific vehicle classes by definition, so it is inherently ambiguous.
+
+Both are kept in the dataset and trained on (not deleted); they are excluded only from the core-scope headline metric, which reflects the classes with adequate, well-defined data.
