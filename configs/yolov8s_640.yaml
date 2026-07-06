@@ -1,0 +1,33 @@
+# configs/yolov8s_640.yaml
+# -------------------------------------------------------------------
+# Disentangling run: bigger model, resolution HELD at 640.
+# This isolates the effect of model capacity alone, since the earlier
+# s@1280 run changed both model AND resolution together.
+#
+# Compare directly against the resplit baseline (yolov8n @ 640 = 0.649):
+#   s@640 > n@640  -> capacity helps; 1280 was the culprit
+#   s@640 ~ n@640  -> capacity is NOT the bottleneck (stop chasing size)
+#
+# Everything except `model` is identical to configs/resplit.yaml.
+# -------------------------------------------------------------------
+
+# --- Model & data ---
+model: yolov8s.pt                       # the only deliberate change vs resplit
+data: data/dataset_split/data.yaml
+
+# --- Run identity ---
+name: yolov8s_640
+project: runs
+
+# --- Core training (identical to resplit) ---
+epochs: 50
+patience: 20
+imgsz: 640                              # HELD at 640 (not 1280) — the point
+batch: 16
+seed: 42
+device: 0,1                             # both T4s; use 0 for single-GPU fallback
+
+# --- Augmentation / regularization (identical to resplit) ---
+close_mosaic: 10
+mixup: 0.15
+dropout: 0.1
