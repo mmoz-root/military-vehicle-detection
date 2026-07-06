@@ -33,6 +33,9 @@ def main():
     ap.add_argument("--data", default="data/dataset_clean/data.yaml",
                     help="dataset yaml (resolved relative to project root)")
     ap.add_argument("--imgsz", type=int, default=640)
+    ap.add_argument("--exclude", default="trench,vehicle",
+                    help="comma-separated class names to exclude from the "
+                         "'core' scope (data-limited / ambiguous classes)")
     args = ap.parse_args()
 
     weights = resolve(args.weights)
@@ -61,6 +64,20 @@ def main():
     missing = [names[k] for k in names if k not in evaluated]
     if missing:
         print("\n(No test instances, not evaluated): " + ", ".join(missing))
+
+    # dual-scope: report overall AND a 'core' mean that excludes classes
+    # known to be data-limited (trench) or ambiguous by definition (vehicle)
+    exclude = {n.strip() for n in args.exclude.split(",") if n.strip()}
+    core = [ap50[i] for i, c in enumerate(metrics.box.ap_class_index)
+            if names[int(c)] not in exclude]
+    if exclude and core:
+        core_mean = sum(core) / len(core)
+        n_all = len(metrics.box.ap_class_index)
+        print("\n----------------  DUAL-SCOPE mAP50  ----------------")
+        print(f"All {n_all} classes:                       {metrics.box.map50:.4f}")
+        print(f"Core {len(core)} classes (excl. {', '.join(sorted(exclude))}):  {core_mean:.4f}")
+        print("  (excluded: trench = too few instances; "
+              "vehicle = generic/ambiguous)")
 
 
 if __name__ == "__main__":
