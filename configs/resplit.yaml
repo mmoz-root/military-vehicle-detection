@@ -1,0 +1,32 @@
+# configs/resplit.yaml
+# -------------------------------------------------------------------
+# Same hyperparameters as baseline.yaml, but trained on the RE-SPLIT
+# dataset (data/dataset_split) where every class is distributed fairly
+# across train/valid/test. This isolates the effect of fixing the
+# domain-shift split problem.
+#
+# NOTE: the test set here is DIFFERENT from the baseline's test set (by
+# design -- the old one was broken). So this is the first *trustworthy*
+# test score, not a clean "+X vs baseline" delta.
+# -------------------------------------------------------------------
+
+# --- Model & data ---
+model: yolov8n.pt
+data: data/dataset_split/data.yaml      # <-- the re-split dataset
+
+# --- Run identity ---
+name: resplit_yolov8n
+project: runs
+
+# --- Core training (identical to baseline) ---
+epochs: 50
+patience: 20
+imgsz: 640
+batch: 16
+seed: 42
+# device: 0
+
+# --- Augmentation / regularization (identical to baseline) ---
+close_mosaic: 10
+mixup: 0.15
+dropout: 0.1
