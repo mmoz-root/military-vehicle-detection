@@ -32,12 +32,19 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--config", default="configs/baseline.yaml",
                     help="path to a training config YAML")
+    ap.add_argument("--epochs", type=int, default=None,
+                    help="override the config's epoch count (e.g. --epochs 1 "
+                         "for a quick smoke test)")
     args = ap.parse_args()
 
     cfg_path = resolve(args.config)
     if not cfg_path.exists():
         raise SystemExit(f"Config not found: {cfg_path}")
     cfg = yaml.safe_load(cfg_path.read_text())
+
+    # optional CLI override (handy for a 1-epoch smoke test)
+    if args.epochs is not None:
+        cfg["epochs"] = args.epochs
 
     # 'model' selects the weights for YOLO(); everything else is a train() kwarg.
     model_weights = cfg.pop("model")

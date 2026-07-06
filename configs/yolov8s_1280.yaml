@@ -1,0 +1,32 @@
+# configs/yolov8s_1280.yaml
+# -------------------------------------------------------------------
+# Iteration 2: bigger model + higher resolution, on the re-split data.
+# Two deliberate changes vs the resplit run: model (n -> s) and
+# imgsz (640 -> 1280). Everything else identical.
+#
+# Hardware: Kaggle 2x Tesla T4 (15 GB each).
+#   device: 0,1  -> train across BOTH cards (roughly 2x throughput).
+#   If multi-GPU misbehaves on Kaggle, fall back to `device: 0`.
+#   If it OOMs at 1280, drop batch 16 -> 8 (the smoke test will tell you).
+# -------------------------------------------------------------------
+
+# --- Model & data ---
+model: yolov8s.pt                       # small (~11M params), was nano
+data: data/dataset_split/data.yaml      # the re-split dataset
+
+# --- Run identity ---
+name: yolov8s_1280
+project: runs
+
+# --- Core training ---
+epochs: 50
+patience: 20
+imgsz: 1280                             # was 640 — helps small objects (person)
+batch: 16                               # 8 imgs/card across 2x T4; drop to 8 if OOM
+seed: 42
+device: 0,1                             # both T4s; use 0 for single-GPU fallback
+
+# --- Augmentation / regularization (identical to prior runs) ---
+close_mosaic: 10
+mixup: 0.15
+dropout: 0.1
