@@ -1,0 +1,33 @@
+# configs/m640_nomixup.yaml
+# -------------------------------------------------------------------
+# Stack the capacity lever on top of the recipe win.
+# One deliberate change vs configs/s640_nomixup.yaml: model s -> m.
+# (Current best: s640_nomixup = all-10 0.757 / core-8 0.795.)
+#
+#   m@640 > s640_nomixup  -> capacity still stacks; m is the new best
+#   m@640 ~ s640_nomixup  -> diminishing returns on size; ship the s model
+#
+# yolov8m is ~2.6x the params of s. At imgsz 640 it fits comfortably on
+# 2x T4; if the smoke test OOMs, drop batch 16 -> 8.
+# -------------------------------------------------------------------
+
+# --- Model & data ---
+model: yolov8m.pt                       # the only deliberate change vs s640_nomixup
+data: data/dataset_split/data.yaml
+
+# --- Run identity ---
+name: m640_nomixup
+project: runs
+
+# --- Core training (identical to s640_nomixup) ---
+epochs: 50
+patience: 20
+imgsz: 640
+batch: 16
+seed: 42
+device: 0,1                             # both T4s; use 0 for single-GPU fallback
+
+# --- Augmentation / regularization ---
+close_mosaic: 10
+mixup: 0.0                              # kept off (the recipe win)
+dropout: 0.0                            # no-op for detection
