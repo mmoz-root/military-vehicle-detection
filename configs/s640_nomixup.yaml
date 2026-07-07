@@ -1,0 +1,34 @@
+# configs/s640_nomixup.yaml
+# -------------------------------------------------------------------
+# Recipe experiment on the current best model (yolov8s @ 640 = core-8 0.757).
+# One deliberate change vs configs/yolov8s_640.yaml: mixup 0.15 -> 0.0.
+#
+# Hypothesis: mixup is aggressive for fine-tuning pretrained weights on a
+# modest dataset; turning it off may let the model fit the data better.
+#
+# NOTE: `dropout` is a no-op for YOLO *detection* in Ultralytics (it is only
+# applied in the classification trainer). It is set to 0.0 here for honesty;
+# this does NOT affect the comparison, since it was already inert. The only
+# *effective* change vs s@640 is mixup.
+# -------------------------------------------------------------------
+
+# --- Model & data ---
+model: yolov8s.pt
+data: data/dataset_split/data.yaml
+
+# --- Run identity ---
+name: s640_nomixup
+project: runs
+
+# --- Core training (identical to yolov8s_640) ---
+epochs: 50
+patience: 20
+imgsz: 640
+batch: 16
+seed: 42
+device: 0,1                             # both T4s; use 0 for single-GPU fallback
+
+# --- Augmentation / regularization ---
+close_mosaic: 10
+mixup: 0.0                              # <-- the change (was 0.15)
+dropout: 0.0                            # no-op for detection (see note above)
