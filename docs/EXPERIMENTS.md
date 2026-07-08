@@ -33,7 +33,7 @@ the mean. Investigating *why* led to the key discovery:
 > (domain shift). `plane` had **zero** test instances. The split itself was
 > broken.
 
-## Iteration 1 — Stratified re-split ✅ THE BIG WIN
+## Iteration 1 — Stratified re-split THE BIG WIN
 **Change:** pooled all images, re-split stratified so every class sits at
 ~8–11% test. **Model unchanged.**
 **Result:** test mAP50 0.447 → **0.649**. `person`: 0.09 → 0.58. `plane`:
@@ -45,7 +45,7 @@ finally saw every class) and fairer *measurement* (an honest test set).
 clean "+0.20 of capability." 0.649 was the first *trustworthy* number. From here
 on, all runs use this same re-split test set, so they ARE directly comparable.
 
-## Iteration 2 — Bigger model + resolution ❌ MISLEADING (my mistake)
+## Iteration 2 — Bigger model + resolution MISLEADING (my mistake)
 **Change:** `yolov8s` **and** imgsz 1280 — two variables at once, to save
 compute.
 **Result:** **0.621** — slightly *worse* than 0.649.
@@ -57,7 +57,7 @@ hurt, or something else. This is the cautionary tale of the whole project.
 large objects (`tank`, `plane`) dipped → a hint that resolution was doing
 something scale-dependent.
 
-## Iteration 3 — Disentangle: s @ 640 ✅ OVERTURNED THE MISTAKE
+## Iteration 3 — Disentangle: s @ 640 OVERTURNED THE MISTAKE
 **Change:** `yolov8s`, resolution back to **640** (isolate the model).
 **Result:** **0.688** — the best yet, beating both `n@640` (0.649) and
 `s@1280` (0.621).
@@ -80,7 +80,7 @@ Kept all 10 classes, but reported two honest numbers: all-10 (0.649) and core-8
 (0.726, excluding `trench` = too scarce, `vehicle` = ambiguous). Higher, honest
 headline for zero compute. Added to `evaluate.py` so every run auto-reports both.
 
-## Iteration 4 — Recipe: remove mixup ✅ SECOND-BIGGEST WIN
+## Iteration 4 — Recipe: remove mixup SECOND-BIGGEST WIN
 **Pre-check that saved a run:** I'd planned to also test removing `dropout` —
 but reading the Ultralytics source showed `dropout` is **only applied in the
 classification trainer**, i.e. a **no-op for detection**. Our `dropout: 0.1` had
@@ -93,7 +93,7 @@ a modest dataset — blending images suppressed the model's ability to commit to
 detections. Turning it off let the fine-tune fit. The recall jump confirmed the
 gain was real (more objects found, not luck).
 
-## Iteration 5 — Push capacity: m @ 640 ❌ TOO MUCH MODEL
+## Iteration 5 — Push capacity: m @ 640 TOO MUCH MODEL
 **Change:** `yolov8m` on the winning no-mixup recipe (isolate model size again).
 **Result:** **0.725** (core-8 0.778) — *down* from `s`. Recall dropped
 0.73 → 0.63; precision rose 0.75 → 0.81.
@@ -149,9 +149,3 @@ not directly comparable to the rows above.)
    moving on confidence alone is suspect.
 5. **Bigger isn't better.** Both capacity and resolution had a sweet spot;
    overshooting hurt.
-
-## Also-messy-in-practice (workflow)
-- Leaked the Roboflow API key in the original notebook → rotated + moved to
-  `.env`. Twice accidentally committed the dataset to Git → untracked with
-  `git rm --cached` and fixed `.gitignore`. Real projects are messy; the fix
-  is habits (checking `git ls-files | wc -l`), not perfection.
