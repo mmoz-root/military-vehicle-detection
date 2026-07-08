@@ -144,7 +144,7 @@ the needle"* — stronger than *"I trained a model."*
 
 ## Part 4 — Phase-by-phase breakdown
 
-### Phase 0 — Data foundation ✅
+### Phase 0 — Data foundation
 - Rotated the leaked Roboflow API key; moved it to a git-ignored `.env`.
 - **Audited** the dataset (`audit_dataset.py`): per-class counts, duplicate/
   numeric-name flags, saved annotated sample images.
@@ -154,7 +154,7 @@ the needle"* — stronger than *"I trained a model."*
   via a reproducible config-driven script (`clean_taxonomy.py`), writing a clean
   copy and leaving the raw download untouched.
 
-### Phase 1 — Repo structure ✅
+### Phase 1 — Repo structure
 - Restructured into `src/` (code), `data/` (datasets, gitignored),
   `configs/` (hyperparameters), `runs/` (outputs, gitignored).
 - Made all scripts **location-independent** (resolve paths from project root).
@@ -164,12 +164,12 @@ the needle"* — stronger than *"I trained a model."*
   dependencies in `requirements.txt`.
 
 ### Phase 2 — Model training & improvement (in progress)
-1. ✅ Training config (`configs/baseline.yaml`) — mirrors original settings.
-2. ✅ Train + eval scripts (`src/train.py`, `src/evaluate.py`) — eval reports on
+1. Training config (`configs/baseline.yaml`) — mirrors original settings.
+2. Train + eval scripts (`src/train.py`, `src/evaluate.py`) — eval reports on
    the **held-out test split**, which the original notebook never did.
-3. ⬜ **Baseline run** — retrain nano on clean data; measure jump from ~0.58.
-4. ⬜ **Compute decision** — Kaggle (fast/familiar) vs Modal (better long-term).
-5. ⬜ **Model improvements** — nano → s/m, revisit augmentation, tune; each change
+3. **Baseline run** — retrain nano on clean data; measure jump from ~0.58.
+4. **Compute decision** — Kaggle (fast/familiar) vs Modal (better long-term).
+5. **Model improvements** — nano → s/m, revisit augmentation, tune; each change
    measured against the baseline.
 
 ---
