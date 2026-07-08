@@ -1,47 +1,57 @@
 # Military Vehicle Detection (YOLOv8)
 
-Object detection model for identifying military vehicles, people, and structures
-in aerial and ground imagery, built on Ultralytics YOLOv8.
+Object detection for military vehicles, people, and structures in aerial and
+ground imagery, built with Ultralytics YOLOv8.
 
-> **Status:** work in progress. Dataset preparation is complete; model training
-> and evaluation are in progress. Results below will be filled in once training
-> on the cleaned dataset finishes.
+This project is as much about **data quality and rigorous experimentation** as
+about the model. The largest gains came from fixing the dataset and the training
+recipe — not from swapping architectures. Every result below is backed by a
+clean, one-variable-at-a-time experiment.
+
+**Final model:** `yolov8s` @ 640px, mixup disabled, trained on a
+taxonomy-cleaned, re-split dataset.
 
 ---
 
-## Dataset
+## Results (held-out test split)
 
-The data comes from a [Roboflow](https://roboflow.com) project exported in YOLOv8
-format. The raw export shipped with a **contaminated 16-class taxonomy** — a
-telltale sign that it had been assembled by merging several separately-labeled
-sources without harmonizing their class maps.
+| Scope | mAP50 | mAP50-95 | recall |
+|---|---|---|---|
+| All 10 classes | 0.757 | 0.471 | 0.726 |
+| Core 8 (excl. `trench`, `vehicle`) | **0.795** | — | — |
 
-Problems found during the audit:
+`trench` (only 51 instances) and `vehicle` (a generic, ambiguous catch-all) are
+kept in the dataset and trained on, but excluded from the *core* headline metric
+with justification. Full per-class breakdown and every experiment is in
+[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
 
-- **Numeric classes** `0`–`4` with no human-readable names, sitting alongside
-  properly-named classes.
-- **A case-duplicate**: both `Person` and `person` as separate classes for the
-  same object.
-- **A generic `Vehicle`** class overlapping the specific vehicle types.
+---
 
-Inspecting sample annotations showed the numeric classes were *duplicate
-labelings* of vehicle types that already had proper names (e.g. `1` → tanks,
-`2` → trucks, `0`/`3`/`4` → armored vehicles).
+## The short story
 
-The taxonomy was then **harmonized from 16 classes down to 10, with zero
-annotations lost** (22,691 boxes preserved) using a reproducible, config-driven
-script (`src/clean_taxonomy.py`) that writes a cleaned copy and leaves the raw
-download untouched.
+The original notebook scored ~0.58 on the raw data. The path to the final model:
 
-### Final classes (10)
+| Lever | Effect on mAP50 | Verdict |
+|---|---|---|
+| Fix broken train/test split | **+0.20** | by far the biggest |
+| Disable mixup (training recipe) | **+0.07** | big |
+| Model capacity `n -> s` | +0.04 | modest help |
+| Model capacity `s -> m` | -0.03 | too much model |
+| Resolution `640 -> 1280` | -0.03 | scale mismatch, hurt |
 
-| Class | Instances | | Class | Instances |
-|---|---:|---|---|---:|
-| tank | 6,855 | | rszo (rocket artillery) | 767 |
-| person | 5,083 | | sau (self-propelled artillery) | 479 |
-| truck | 4,206 | | plane | 297 |
-| armored_car | 3,306 | | vehicle (generic) | 196 |
-| car | 1,451 | | trench | 51 |
+The biggest wins were the unglamorous ones — data and recipe — while the
+"obvious" upgrades (bigger model, higher resolution) gave diminishing returns or
+backfired. There's a real optimum in the middle. The full journey, **including
+the wrong turns and what corrected them**, is in
+[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md).
+
+---
+
+## Classes (10)
+
+`tank`, `truck`, `armored_car`, `car`, `rszo` (rocket artillery),
+`sau` (self-propelled artillery), `plane`, `person`, `vehicle` (generic),
+`trench`
 
 ---
 
@@ -50,21 +60,33 @@ download untouched.
 ```
 military-vehicle-detection/
 ├── README.md
+├── requirements.txt
 ├── .gitignore
-├── .env                 # local only — Roboflow API key (never committed)
-├── configs/             # training hyperparameters (YAML)
-├── data/                # datasets (gitignored)
-│   ├── dataset/         # raw Roboflow download
-│   └── dataset_clean/   # harmonized output
-└── src/
-    ├── download_dataset.py   # pull dataset from Roboflow
-    ├── audit_dataset.py      # class counts, flags, sample images
-    └── clean_taxonomy.py     # 16 -> 10 class harmonization
+├── .env                      # local only — Roboflow API key (never committed)
+├── configs/                  # one YAML per experiment
+│   ├── baseline.yaml
+│   ├── resplit.yaml
+│   ├── yolov8s_640.yaml
+│   ├── yolov8s_1280.yaml
+│   ├── s640_nomixup.yaml     # <- the final model
+│   └── m640_nomixup.yaml
+├── data/                     # datasets (gitignored)
+├── runs/                     # training outputs (gitignored)
+├── src/
+│   ├── download_dataset.py   # pull from Roboflow
+│   ├── audit_dataset.py      # class counts, flags, samples
+│   ├── clean_taxonomy.py     # 16 -> 10 class harmonization
+│   ├── resplit_dataset.py    # stratified train/valid/test re-split
+│   ├── train.py              # config-driven training
+│   └── evaluate.py           # test-split metrics (dual-scope)
+└── docs/
+    ├── EXPERIMENTS.md        # the full journey, dead ends included
+    ├── MATH.md               # metrics + loss-function math
+    └── PROJECT_NOTES.md      # YOLO background + phase-by-phase log
 ```
 
-Code lives in `src/`, data in `data/`, configuration in `configs/`. All scripts
-are location-independent — they resolve paths from the project root, so they run
-correctly from any working directory.
+Code in `src/`, data in `data/`, config in `configs/`, outputs in `runs/`. All
+scripts are location-independent (paths resolve from the project root).
 
 ---
 
@@ -78,51 +100,51 @@ cd military-vehicle-detection
 # 2. Environment
 python3 -m venv .venv
 source .venv/bin/activate
-pip install roboflow opencv-python pyyaml pandas ultralytics
+pip install -r requirements.txt
 
-# 3. Credentials — create a .env file in the project root:
+# 3. Credentials — create a .env in the project root:
 echo "ROBOFLOW_API_KEY=your_key_here" > .env
 
-# 4. Build the dataset
-python src/download_dataset.py        # -> data/dataset/
-python src/clean_taxonomy.py          # -> data/dataset_clean/
-python src/audit_dataset.py           # verify: 10 clean classes, no flags
+# 4. Build the dataset (download -> clean taxonomy -> stratified re-split)
+python src/download_dataset.py
+python src/clean_taxonomy.py
+python src/resplit_dataset.py
+
+# 5. Train the final model and evaluate on the test split
+python src/train.py    --config configs/s640_nomixup.yaml
+python src/evaluate.py --weights runs/s640_nomixup/weights/best.pt \
+                       --data data/dataset_split/data.yaml
 ```
+
+Training was done on Kaggle (2x Tesla T4). Any CUDA GPU works; adjust
+`device`/`batch` in the config to fit your hardware.
 
 ---
 
-## Results
+## Documentation
 
-_Training on the cleaned dataset is in progress. Metrics (mAP50, mAP50-95,
-per-class breakdown) and sample predictions will be added here._
-
-An early baseline trained on the **raw, uncleaned** data reached ~58% mAP50;
-much of that ceiling was an artifact of the broken taxonomy rather than model
-capacity, which is what the dataset cleanup above addresses.
+- **[docs/EXPERIMENTS.md](docs/EXPERIMENTS.md)** — the full experiment log:
+  every hypothesis, result, and dead end, with the leverage ranking.
+- **[docs/MATH.md](docs/MATH.md)** — the math: IoU, precision/recall, AP/mAP,
+  and the YOLOv8 loss (CIoU + DFL + BCE), each with plain-English intuition.
+- **[docs/PROJECT_NOTES.md](docs/PROJECT_NOTES.md)** — YOLO background and the
+  phase-by-phase build log.
 
 ---
 
 ## Known limitations
 
-- **`trench`** has only 51 instances total — too few for the model to learn or
-  be evaluated on reliably. Kept for completeness, but expect weak performance.
-- **`plane`** has no instances in the test split, so it can't be evaluated on
-  held-out data.
-- **Video-frame artifacts:** some images are frames captured from surveillance/
-  drone footage and contain player overlays or timestamps baked into the pixels.
+- **`trench`** — only 51 instances; too scarce to learn or evaluate reliably.
+- **`vehicle`** — a generic catch-all that overlaps the specific vehicle types
+  by definition; inherently ambiguous.
+- **Small objects** (`person`) remain the hardest, a known challenge for aerial
+  imagery where objects span only a few pixels.
+- **Video-frame artifacts** — some images are frames from surveillance/drone
+  footage and contain player overlays or timestamps baked into the pixels.
 
-## Results
+---
 
-Best model: yolov8n @ 640, re-split data. Reported at two scopes:
+## Tech stack
 
-| Scope | mAP50 |
-|---|---|
-| All 10 classes | 0.649 |
-| Core 8 classes (excl. trench, vehicle) | 0.726 |
-
-Two classes are excluded from the "core" scope, with justification:
-
-- **trench** — only 51 instances total; insufficient to learn or evaluate reliably.
-- **vehicle** — a generic catch-all that overlaps the specific vehicle classes by definition, so it is inherently ambiguous.
-
-Both are kept in the dataset and trained on (not deleted); they are excluded only from the core-scope headline metric, which reflects the classes with adequate, well-defined data.
+Ultralytics YOLOv8 (PyTorch backend), fine-tuning COCO-pretrained weights via
+transfer learning. Dataset from Roboflow. Trained on Kaggle GPUs.
