@@ -129,6 +129,7 @@ Training was done on Kaggle (2x Tesla T4). Any CUDA GPU works; adjust
   and the YOLOv8 loss (CIoU + DFL + BCE), each with plain-English intuition.
 - **[docs/PROJECT_NOTES.md](docs/PROJECT_NOTES.md)** — YOLO background and the
   phase-by-phase build log.
+- **[docs/notes.pdf](docs/notes.pdf)** — taken notes on ipad thruout the project
 
 ---
 
